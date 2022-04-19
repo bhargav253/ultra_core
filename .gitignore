@@ -1,0 +1,12 @@
+
+*
+!*/
+!.gitignore
+!*.md
+!*.pdf
+!*.sv
+!Makefile
+!logw.tcl
+!*.ld
+!*.py
+!*.S
