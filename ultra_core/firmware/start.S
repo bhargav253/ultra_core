@@ -1,6 +1,10 @@
-start:
-	/* zero-initialize all registers */
+.equ UART_BASE, 0x10000000
+.equ GPIO_BASE, 0x10000004	
 
+.section .text
+.global _start
+
+_start:
 	addi x1, zero, 0
 	addi x2, zero, 0
 	addi x3, zero, 0
@@ -34,7 +38,7 @@ start:
 	addi x31, zero, 0
 
 	/* set stack pointer */
-	lui sp,(64*1024)>>12
+	li sp,0x00000400
 
 	/* set gp and tp */
 	lui gp, %hi(0xdeadbeef)
@@ -42,7 +46,7 @@ start:
 	addi tp, gp, 0
 
 	/* print "DONE\n" */
-	lui a0,0x10000000>>12
+	li a0,0x00000800
 	addi a1,zero,'D'
 	addi a2,zero,'O'
 	addi a3,zero,'N'
@@ -54,21 +58,37 @@ start:
 	sw a4,0(a0)
 	sw a5,0(a0)
 
-	li a0, 0x20000000
+	li a0, 0x00000800
 	li a1, 123456789
 	sw a1,0(a0)
 
 	la  x1, tdat;
 	lw  x3, 0(x1);
 	li  x29, 0x00ff00ff;
-	li  x28, 2; \
 	bne x3, x29, fail;
 	jal	zero,pass;	
 back:	
-	ebreak;
+	li a0, GPIO_BASE
+	addi a1,zero,15
+	sw a1,0(a0)
+	jal puts
+
+puts:		
+	la a0, msg
+	li a1, UART_BASE
+
+.puts_loop:
+	lbu a2, (a0)
+	beqz a2, .puts_done
+	sw a2,0(a1)
+	add a0, a0, 1
+	j .puts_loop
+	
+.puts_done:
+	jal puts
 
 pass:
-	lui	a0,0x10000000>>12;
+	li	a0,0x00000800;
 	addi	a1,zero,'O';
 	addi	a2,zero,'K';
 	addi	a3,zero,'\n';
@@ -78,7 +98,7 @@ pass:
 	jal	zero,back;
 
 fail:	
-	lui	a0,0x10000000>>12;
+	li	a0,0x0000800;
 	addi	a1,zero,'E';
 	addi	a2,zero,'R';
 	addi	a3,zero,'O';
@@ -96,5 +116,5 @@ tdat1:  .word 0x00ff00ff
 tdat2:  .word 0xff00ff00
 tdat3:  .word 0x0ff00ff0
 tdat4:  .word 0xf00ff00f
-	
-	
+msg:
+	.string "HelloWorld.\n"

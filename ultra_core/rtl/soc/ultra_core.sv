@@ -3,18 +3,15 @@
 
 `define RISCV_BOOT_ADDRESS      32'h00000000
 
-localparam depth=16384;
 localparam memfile = "firmware.hex";
 
 module ultra_core
   (
    // Declare some signals so we can see how I/O works
-   input 	      clk,
-   input 	      rst_n,
-   input logic 	      we,
-   input logic [3:0]  addr,
-   input logic [7:0]  wdata,
-   output logic [7:0] rdata   
+   input 	clk,
+   input 	rst_n,
+   output 	UART_TX,
+   output [3:0] GPIO_O
    );
 
    assign rdata = '0;   
@@ -42,6 +39,11 @@ module ultra_core
    wire 		     i__core_error;
    wire [ 31:0] 	     i__core_rdata;
    wire [ 31:0] 	     i__core_pc;
+
+   wire [31:0] 		     iob__mio_wdata;
+   wire 		     iob__mio_val;
+   wire 		     iob__mio_port;
+   wire 		     mio__iob_done;      
          
    riscv_core core
      (
@@ -79,12 +81,11 @@ module ultra_core
    
    
    iob 
-     #(.depth   (depth),
-       .memfile (memfile))
+     #(.memfile (memfile))
    iob (
 	// inputs
 	.clk(clk) 
-	,.rst(~rst_n)
+	,.rst_n(rst_n)
 	,.core__d_addr(core__d_addr)
 	,.core__d_wdata(core__d_wdata)
 	,.core__d_ren(core__d_ren)
@@ -97,11 +98,29 @@ module ultra_core
 	,.d__core_error(d__core_error)
 	,.d__core_rdata(d__core_rdata)
 	,.d__core_resp_tag(d__core_resp_tag)
+	,.iob__mio_val(iob__mio_val)
+	,.iob__mio_port(iob__mio_port)
+	,.iob__mio_wdata(iob__mio_wdata)
+	,.mio__iob_done(mio__iob_done)	
 	,.i__core_accept(i__core_accept)
 	,.i__core_val(i__core_val)
 	,.i__core_error(i__core_error)
 	,.i__core_rdata(i__core_rdata)
 	,.i__core_pc(i__core_pc));
+
+
+   mio 
+     mio (
+	  // inputs
+	  .clk(clk) 
+	  ,.rst_n(rst_n)
+	  ,.iob__mio_val(iob__mio_val)
+	  ,.iob__mio_port(iob__mio_port)
+	  ,.iob__mio_wdata(iob__mio_wdata)
+	  ,.mio__iob_done(mio__iob_done)
+	  ,.gpio_out(GPIO_O)
+	  ,.uart_txd(UART_TX));
+
    
    // Print some stuff as an example
    initial begin
