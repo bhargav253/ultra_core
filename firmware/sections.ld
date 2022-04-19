@@ -1,25 +1,34 @@
-/*
-This is free and unencumbered software released into the public domain.
-
-Anyone is free to copy, modify, publish, use, compile, sell, or
-distribute this software, either in source code form or as a compiled
-binary, for any purpose, commercial or non-commercial, and by any
-means.
-*/
-
-MEMORY {
-	/* the memory in the testbench is 64k in size;
-	 * set LENGTH=48k and leave at least 16k for stack */
-	mem : ORIGIN = 0x00000000, LENGTH = 0x00018000
+OUTPUT_ARCH( "riscv" )
+ENTRY(_start)
+MEMORY { 
+	rom(rwx) : ORIGIN = 0x00000000, LENGTH = 1k
+        ram(rwx) : ORIGIN = 0x00000400, LENGTH = 3k
 }
-
 SECTIONS {
-	.memory : {
-		. = 0x000000;
+	.rom : {
+                _start*(.text);
 		start*(.text);
+                . = ALIGN(4);
 		*(.text);
-		*(*);
-		end = .;
-		. = ALIGN(4);
-	} > mem
+        } > rom
+
+        .data : {
+          _data_lma = LOADADDR(.data);
+          _data = .;
+          __global_pointer$ = . ;
+          *(.data .data.* )
+          *(.sdata .sdata.*)
+           . = ALIGN(4);
+          _edata = .;
+        } >ram AT>rom
+
+        .bss : {
+          _bss_start = .;
+          *(.bss .bss.*)
+           . = ALIGN(4);
+          _bss_end = .;
+          _end = .;
+	  stack_top = .;
+        } >ram
 }
+ 
