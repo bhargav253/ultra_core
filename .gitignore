@@ -10,4 +10,6 @@
 !*.ld
 !*.py
 !*.S
+!*.c
+!*.h
 firmware/bkup/*
