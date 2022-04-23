@@ -92,7 +92,7 @@ wire [31:0] branch_pc_w   = (branch_valid_q & !fetch_branch_i) ? branch_pc_q : f
 //-------------------------------------------------------------
 // Sequential
 //-------------------------------------------------------------
-always @ (posedge clk_i or posedge rst_i)
+always @ (posedge clk_i)
 if (rst_i)
 begin
     fetch_pc_q     <= 32'b0;

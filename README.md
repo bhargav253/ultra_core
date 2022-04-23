@@ -1,7 +1,8 @@
 ### Directory Structure
 ```
 ultra_core
-├── docs
+├── doc
+├── constraints
 ├── firmware
 ├── README.md
 ├── rtl
@@ -25,7 +26,7 @@ ultra_core
 
 ### prereqs
 ```
-Vivado 2020.2
+Vivado 2021.2
 riscv32 tool chain
 ```
 
@@ -34,3 +35,5 @@ riscv32 tool chain
 cd scripts
 make run_all
 ```
+
+### Constaint file is for Arty 7

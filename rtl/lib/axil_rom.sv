@@ -12,45 +12,47 @@ module axil_rom
    clk, rst_n, axi_araddr, axi_arvalid, axi_rready, mem_rdata
    );
    
-   input wire 			 clk;
-   input wire 			 rst_n;
+   input 			 clk;
+   input 			 rst_n;
 
-   input wire [ADDR_WIDTH-1:0] 	 axi_araddr;
-   input wire 			 axi_arvalid;
-   output wire 			 axi_arready;
+   input [ADDR_WIDTH-1:0] 	 axi_araddr;
+   input 			 axi_arvalid;
+   output logic 		 axi_arready;
 
-   output wire [DATA_WIDTH-1:0]  axi_rdata;
-   output wire [1:0] 		 axi_rresp;
-   output wire 			 axi_rvalid;
-   input wire 			 axi_rready;
+   output logic [DATA_WIDTH-1:0] axi_rdata;
+   output logic [1:0] 		 axi_rresp;
+   output logic 		 axi_rvalid;
+   input 			 axi_rready;
    
    output 			 mem_ren;   
    output [ADDR_WIDTH-1:0] 	 mem_raddr;   
    input [DATA_WIDTH-1:0] 	 mem_rdata;   
-      
-   logic 			 axi_rvalid_reg;
+   
+   logic 			 rd_resp_pend,rd_resp_full;
    logic 			 rd_addr_err;   
    logic [1:0] 			 mem_rd_error,mem_rd_error_d1;
 
    assign rd_addr_err  = !((axi_araddr >= MEM_START) && (axi_araddr < MEM_STOP));
    
    assign mem_raddr    = axi_araddr;      
-   assign mem_ren      = axi_arvalid & !rd_addr_error;   
+   assign mem_ren      = axi_arvalid & !rd_addr_err & !rd_resp_full;   
    assign mem_rd_error = {(axi_arvalid & rd_addr_err),1'b0};   
 
-   assign axi_arready = '1;
-   assign axi_rdata   = |mem_rd_error_d1 ? '0 : mem_rdata;
+   assign axi_arready = axi_arvalid & !rd_resp_full;
+   assign axi_rdata   = |mem_rd_error_d1 ? '0 : rd_resp_pend ? mem_rdata : '0;
    assign axi_rresp   = mem_rd_error_d1;
-   assign axi_rvalid  = axi_rvalid_reg;
+   assign axi_rvalid  = rd_resp_pend;
+
+   assign rd_resp_full = rd_resp_pend & !axi_rready;   
    
    always @(posedge clk) begin
       if (!rst_n) begin
+	 rd_resp_pend    <= '0;	 
 	 mem_rd_error_d1 <= '0;
-	 axi_rvalid_reg  <= '0;	 
       end
       else begin
-         mem_rd_error_d1 <= mem_rd_error;
-	 axi_rvalid_reg  <= axi_arvalid;	 
+	 rd_resp_pend    <= axi_arvalid & !rd_resp_full ? '1 :           axi_rready ? '0 : rd_resp_pend;	 
+         mem_rd_error_d1 <= axi_arvalid & !rd_resp_full ? mem_rd_error : axi_rready ? '0 : mem_rd_error_d1;
       end
    end   
 

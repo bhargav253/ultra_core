@@ -94,7 +94,7 @@ wire mult_inst_w    = opcode_instr_i[`ENUM_INST_MUL]     ||
 
 // Multiplier takes 1 full cycle, with the result appearing on 
 // writeback the cycle after...
-always @(posedge clk_i or posedge rst_i)
+always @(posedge clk_i)
 if (rst_i)
     mult_busy_q <= 1'b0;
 else if (opcode_valid_i & !stall_o)
@@ -138,7 +138,7 @@ begin
     endcase
 end
 
-always @(posedge clk_i or posedge rst_i)
+always @(posedge clk_i)
 if (rst_i)
     mult_result_q <= 32'b0;
 else
@@ -166,7 +166,7 @@ reg        invert_res_q;
 wire div_start_w    = opcode_valid_i & div_rem_inst_w & !stall_o;
 wire div_complete_w = !(|q_mask_q) & div_busy_q;
 
-always @(posedge clk_i or posedge rst_i)
+always @(posedge clk_i)
 if (rst_i)
 begin
     div_busy_q     <= 1'b0;
@@ -234,7 +234,7 @@ assign stall_o = (div_busy_q  & (mult_inst_w | div_rem_inst_w)) ||
                  (mult_busy_q & div_rem_inst_w);
 
 
-always @(posedge clk_i or posedge rst_i)
+always @(posedge clk_i)
 if (rst_i)
     rd_q <= 5'b0;
 else if (opcode_valid_i && (div_rem_inst_w | mult_inst_w) && !stall_o)
@@ -242,7 +242,7 @@ else if (opcode_valid_i && (div_rem_inst_w | mult_inst_w) && !stall_o)
 else if (!div_busy_q)
     rd_q <= 5'b0;
 
-always @(posedge clk_i or posedge rst_i)
+always @(posedge clk_i)
 if (rst_i)
     wb_rd_q <= 5'b0;
 else if (mult_busy_q)
@@ -252,7 +252,7 @@ else if (div_complete_w)
 else
     wb_rd_q <= 5'b0;
 
-always @(posedge clk_i or posedge rst_i)
+always @(posedge clk_i)
 if (rst_i)
     wb_result_q <= 32'b0;
 else if (div_complete_w)

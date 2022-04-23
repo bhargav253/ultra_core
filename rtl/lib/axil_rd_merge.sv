@@ -1,3 +1,7 @@
+/*
+ Simple read merge to ROM
+ Expect data to come in 1 cycle always, so no extra buffering
+ */
 module axil_rd_merge
   #(
     parameter NUM_SRCS   = 2,
@@ -41,9 +45,9 @@ module axil_rd_merge
    
    always_comb begin
       mrg_gnt_idx     = '0;            
-      for(int i=NUM_SRCS-1; i>=0; i--)
+      for(int i=0; i<NUM_SRCS; i++)
 	if(src_axi_arvalid[i]) 
-	  mrg_gnt_idx = i[SRC_w-1:0];
+	  mrg_gnt_idx = i[SRC_W-1:0];
    end
    
    assign mrg_gnt = 1 << mrg_gnt_idx;
@@ -51,11 +55,14 @@ module axil_rd_merge
    always_comb begin
       dst_axi_arvalid = '0;
       dst_axi_araddr  = src_axi_araddr;	       
+
+      src_axi_arready = '0;      
       
-      for(int i=0; i<NUM_SRC; i++)
+      for(int i=0; i<NUM_SRCS; i++)
 	if(mrg_gnt[i]) begin	 
-	   dst_axi_arvalid = '1;
-	   dst_axi_araddr  = src_axi_araddr;
+	   dst_axi_arvalid    = src_axi_arvalid[i];
+	   dst_axi_araddr     = src_axi_araddr[i];
+	   src_axi_arready[i] = dst_axi_arready;	   
 	end      
    end
    
@@ -66,7 +73,7 @@ module axil_rd_merge
    
    always_comb begin
       dst_axi_rready = '0;            
-      for(int i=i;i<NUM_SRC;i++) begin
+      for(int i=0;i<NUM_SRCS;i++) begin
 	 src_axi_rdata[i]  = dst_axi_rdata;
 	 src_axi_rresp[i]  = '0;
 	 src_axi_rvalid[i] = '0;	 	 

@@ -8,6 +8,7 @@ pkg_files = []
 
 RTL_SOC   = "../rtl/core/*.sv"
 RTL_CORE  = "../rtl/soc/*.sv"
+RTL_LIB   = "../rtl/lib/*.sv"
 TB        = "../sim/tb/*.sv"
 SEQ_LIB   = "../sim/env/agent/sequence_lib/*.sv"
 REGS      = "../sim/env/agent/regs/*.sv"
@@ -26,7 +27,8 @@ def add_to_list(file_path):
 
 if __name__ == "__main__":    
     add_to_list(RTL_CORE)
-    add_to_list(RTL_SOC)    
+    add_to_list(RTL_SOC)
+    add_to_list(RTL_LIB)
     add_to_list(TB)
     add_to_list(SEQ_LIB)
     add_to_list(REGS)    

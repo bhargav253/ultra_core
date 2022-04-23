@@ -366,7 +366,7 @@ assign branch_pc_o      = branch_target_r;
 //-------------------------------------------------------------
 // Sequential
 //-------------------------------------------------------------
-always @ (posedge clk_i or posedge rst_i)
+always @ (posedge clk_i)
 if (rst_i)
 begin
     rd_x_q         <= 5'b0;
@@ -403,7 +403,7 @@ assign stall_o            = 1'b0; // Not used
 reg        v_dbg_valid_q;
 reg [31:0] v_dbg_pc_q;
 
-always @ (posedge clk_i or posedge rst_i)
+always @ (posedge clk_i)
 if (rst_i)
 begin
     v_dbg_valid_q  <= 1'b0;

@@ -10,12 +10,12 @@ module uart_tx
     parameter BIT_RATE     = 115200,
     parameter PAYLOAD_BITS = 8)  
    (
-    input wire 			  clk , // Top level system clock input.
-    input wire 			  rst_n , // Asynchronous active low reset.
-    output wire 		  uart_txd , // UART transmit pin.
-    output wire 		  uart_tx_done, // Module busy sending previous item.
-    input wire 			  uart_tx_en , // Send the data on uart_tx_data
-    input wire [PAYLOAD_BITS-1:0] uart_tx_data  // The data to be sent
+    input wire 			  clk , 
+    input wire 			  rst_n , 
+    output wire 		  uart_txd ,
+    output wire 		  uart_tx_done, 
+    input wire 			  uart_tx_en ,
+    input wire [PAYLOAD_BITS-1:0] uart_tx_data 
     );
    
    // Input bit rate of the UART line.
@@ -34,38 +34,38 @@ module uart_tx
 
    // Number of clock cycles per uart bit.
    //localparam       CYCLES_PER_BIT     = BIT_P / CLK_P;
-   localparam       CYCLES_PER_BIT = 8;   
+   localparam       CYCLES_PER_BIT = 8;   // FIXME
    
    // Size of the registers which store sample counts and bit durations.
    localparam       COUNT_REG_LEN      = 1+$clog2(CYCLES_PER_BIT);
    
    // Internally latched value of the uart_txd line. Helps break long timing
    // paths from the logic to the output pins.
-   reg 					     txd_reg;
+   reg 				  txd_reg;
    // Storage for the serial data to be sent.
-   reg [PAYLOAD_BITS-1:0] 		     data_to_send;
+   reg [PAYLOAD_BITS-1:0] 	  data_to_send;
    // Counter for the number of cycles over a packet bit.
-   reg [COUNT_REG_LEN-1:0] 		     cycle_counter;
+   reg [COUNT_REG_LEN-1:0] 	  cycle_counter;
    // Counter for the number of sent bits of the packet.
-   reg [3:0] 				     bit_counter;
+   reg [3:0] 			  bit_counter;
    
-   typedef enum 			     logic [1:0] {
-							  FSM_IDLE  = 2'd0,
-							  FSM_START = 2'd1,
-							  FSM_SEND  = 2'd2,
-							  FSM_STOP  = 2'd3
-							  } uart_fsm_t;
+   typedef enum 		  logic [1:0] {
+					       FSM_IDLE  = 2'd0,
+					       FSM_START = 2'd1,
+					       FSM_SEND  = 2'd2,
+					       FSM_STOP  = 2'd3
+					       } uart_fsm_t;
 
    // Current and next states of the internal FSM.
    uart_fsm_t 				     fsm_state,n_fsm_state;
 
-   wire 				     next_bit     = cycle_counter == CYCLES_PER_BIT;
-   wire 				     payload_done = bit_counter   == PAYLOAD_BITS  ;
-   wire 				     stop_done    = bit_counter   == STOP_BITS && fsm_state == FSM_STOP;
+   wire 			  next_bit     = cycle_counter == CYCLES_PER_BIT;
+   wire 			  payload_done = bit_counter   == PAYLOAD_BITS  ;
+   wire 			  stop_done    = bit_counter   == STOP_BITS && fsm_state == FSM_STOP;
 
    assign uart_tx_done = (fsm_state == FSM_STOP) && stop_done;
    assign uart_txd     = txd_reg;
-      
+   
    //
    // Handle picking the next state.
    always @(*) begin : p_n_fsm_state

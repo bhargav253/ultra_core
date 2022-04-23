@@ -101,7 +101,7 @@ reg [31:0] reg_r31_q;
 //-----------------------------------------------------------------
 
 // Synchronous register write back
-always @ (posedge clk_i or posedge rst_i)
+always @ (posedge clk_i)
 if (rst_i)
 begin
     reg_r1_q       <= 32'h00000000;
@@ -393,7 +393,8 @@ endfunction
 //-------------------------------------------------------------
 // set_register: Write register file
 //-------------------------------------------------------------
-function set_register; /*verilator public*/
+/* -----\/----- EXCLUDED -----\/-----
+function set_register; /-*verilator public*-/
     input [4:0] r;
     input [31:0] value;
 begin
@@ -434,6 +435,7 @@ begin
     //endcase
 end
 endfunction
+ -----/\----- EXCLUDED -----/\----- */
 //`endif
 
 

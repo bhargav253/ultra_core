@@ -47,8 +47,7 @@ clean:
 	make clean -C ../firmware
 
 fw_hex:
-	make firmware.hex -C ../firmware
-	cp ../firmware/firmware.hex .
+	make rom.sv -C ../firmware
 
 run_all:
 	make clean
@@ -57,7 +56,7 @@ run_all:
 	make cmp
 	make run_sim_wave
 
-rerun:
+compile:
 	make clean
 	make fw_hex
 	make file_list

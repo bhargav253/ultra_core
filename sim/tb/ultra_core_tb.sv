@@ -8,17 +8,17 @@ module ultra_core_tb;
    import ultra_core_test_pkg::*;
    import uvm_pkg::*;
 
-   logic clk,rst_n;
+   logic clk,rst_n;   
+   logic [3:0] GPIO_O;
+   logic       UART_TX;   
 
-   ultra_core_intf intf(.clk(clk));
+   //ultra_core_intf intf(.clk(clk));
 
    ultra_core DUT (
 		   .clk(clk),
-		   .rst_n(rst_n),		    
-		   .we(intf.we),
-		   .addr(intf.addr),
-		   .wdata(intf.wdata),
-		   .rdata(intf.rdata)
+		   .rst_n(rst_n),
+		   .GPIO_O(GPIO_O),
+		   .UART_TX(UART_TX)
 		   );
 
    initial begin
@@ -34,9 +34,9 @@ module ultra_core_tb;
    end
    
    initial begin
-      uvm_config_db #(virtual ultra_core_intf)::set(null, "*", "vintf", intf);
+      //uvm_config_db #(virtual ultra_core_intf)::set(null, "*", "vintf", intf);
       //run_test();
-      #1000 $finish;              
+      #100000 $finish;              
    end
 endmodule
 

@@ -538,7 +538,7 @@ reg [  4:0]  writeback_idx_q;
 reg [ 31:0]  writeback_value_q;
 reg          writeback_squash_q;
 
-always @ (posedge clk_i or posedge rst_i)
+always @ (posedge clk_i)
 if (rst_i)
 begin
     csr_mepc_q         <= 32'b0;
@@ -678,7 +678,7 @@ end
 reg        branch_q;
 reg [31:0] branch_target_q;
 
-always @ (posedge clk_i or posedge rst_i)
+always @ (posedge clk_i)
 if (rst_i)
 begin
     branch_target_q <= 32'b0;

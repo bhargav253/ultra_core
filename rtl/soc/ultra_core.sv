@@ -3,14 +3,13 @@
 
 `define RISCV_BOOT_ADDRESS      32'h00000000
 
-localparam memfile = "firmware.hex";
-
 module ultra_core
   (
    // Declare some signals so we can see how I/O works
    input 	clk,
    input 	rst_n,
-   output 	UART_TX,
+   input 	UART_RX,
+   output 	UART_TX,   
    output [3:0] GPIO_O
    );
 
@@ -40,10 +39,23 @@ module ultra_core
    wire [ 31:0] 	     i__core_rdata;
    wire [ 31:0] 	     i__core_pc;
 
-   wire [31:0] 		     iob__mio_wdata;
-   wire 		     iob__mio_val;
-   wire 		     iob__mio_port;
-   wire 		     mio__iob_done;      
+   wire 		     mio__axi_arready;
+   wire [31:0] 		     mio__axi_araddr;
+   wire 		     mio__axi_arvalid;
+   wire 		     mio__axi_awready;
+   wire [31:0] 		     mio__axi_awaddr; 
+   wire 		     mio__axi_awvalid;
+   wire 		     mio__axi_wready;
+   wire 		     mio__axi_wvalid;
+   wire [31:0] 		     mio__axi_wdata; 
+   wire [3:0] 		     mio__axi_wstrb;
+   wire 		     mio__axi_bvalid;
+   wire [1:0] 		     mio__axi_bresp;
+   wire 		     mio__axi_bready;
+   wire [31:0] 		     mio__axi_rdata;
+   wire [1:0] 		     mio__axi_rresp; 
+   wire 		     mio__axi_rvalid; 
+   wire 		     mio__axi_rready;
          
    riscv_core core
      (
@@ -51,7 +63,7 @@ module ultra_core
       .clk_i(clk)
       ,.rst_i(~rst_n)
       ,.mem_d_data_rd_i(d__core_rdata)
-      ,.mem_d_accept_i(d__core_accept)
+      ,.mem_d_accept_i(d__core_accept)      
       ,.mem_d_ack_i(d__core_val)
       ,.mem_d_resp_tag_i(d__core_resp_tag)
       ,.mem_d_error_i(d__core_error)
@@ -81,7 +93,6 @@ module ultra_core
    
    
    iob 
-     #(.memfile (memfile))
    iob (
 	// inputs
 	.clk(clk) 
@@ -98,10 +109,23 @@ module ultra_core
 	,.d__core_error(d__core_error)
 	,.d__core_rdata(d__core_rdata)
 	,.d__core_resp_tag(d__core_resp_tag)
-	,.iob__mio_val(iob__mio_val)
-	,.iob__mio_port(iob__mio_port)
-	,.iob__mio_wdata(iob__mio_wdata)
-	,.mio__iob_done(mio__iob_done)	
+	,.mio__axi_arready(mio__axi_arready)
+	,.mio__axi_araddr(mio__axi_araddr)
+	,.mio__axi_arvalid(mio__axi_arvalid)
+	,.mio__axi_awready(mio__axi_awready)
+	,.mio__axi_awaddr(mio__axi_awaddr) 
+	,.mio__axi_awvalid(mio__axi_awvalid)
+	,.mio__axi_wready(mio__axi_wready)
+	,.mio__axi_wvalid(mio__axi_wvalid)
+	,.mio__axi_wdata(mio__axi_wdata) 
+	,.mio__axi_wstrb(mio__axi_wstrb)
+	,.mio__axi_bvalid(mio__axi_bvalid)
+	,.mio__axi_bresp(mio__axi_bresp)
+	,.mio__axi_bready(mio__axi_bready)
+	,.mio__axi_rdata(mio__axi_rdata)
+	,.mio__axi_rresp(mio__axi_rresp) 
+	,.mio__axi_rvalid(mio__axi_rvalid) 
+	,.mio__axi_rready(mio__axi_rready)
 	,.i__core_accept(i__core_accept)
 	,.i__core_val(i__core_val)
 	,.i__core_error(i__core_error)
@@ -114,12 +138,26 @@ module ultra_core
 	  // inputs
 	  .clk(clk) 
 	  ,.rst_n(rst_n)
-	  ,.iob__mio_val(iob__mio_val)
-	  ,.iob__mio_port(iob__mio_port)
-	  ,.iob__mio_wdata(iob__mio_wdata)
-	  ,.mio__iob_done(mio__iob_done)
-	  ,.gpio_out(GPIO_O)
-	  ,.uart_txd(UART_TX));
+	  ,.mio__axi_arready(mio__axi_arready)
+	  ,.mio__axi_araddr(mio__axi_araddr)
+	  ,.mio__axi_arvalid(mio__axi_arvalid)
+	  ,.mio__axi_awready(mio__axi_awready)
+	  ,.mio__axi_awaddr(mio__axi_awaddr) 
+	  ,.mio__axi_awvalid(mio__axi_awvalid)
+	  ,.mio__axi_wready(mio__axi_wready)
+	  ,.mio__axi_wvalid(mio__axi_wvalid)
+	  ,.mio__axi_wdata(mio__axi_wdata) 
+	  ,.mio__axi_wstrb(mio__axi_wstrb)
+	  ,.mio__axi_bvalid(mio__axi_bvalid)
+	  ,.mio__axi_bresp(mio__axi_bresp)
+	  ,.mio__axi_bready(mio__axi_bready)
+	  ,.mio__axi_rdata(mio__axi_rdata)
+	  ,.mio__axi_rresp(mio__axi_rresp) 
+	  ,.mio__axi_rvalid(mio__axi_rvalid) 
+	  ,.mio__axi_rready(mio__axi_rready)
+	  ,.UART_RXD(UART_RX)
+	  ,.UART_TXD(UART_TX)	  
+	  ,.GPIO_OUT(GPIO_O));
 
    
    // Print some stuff as an example

@@ -160,7 +160,7 @@ u_regfile
 //-------------------------------------------------------------
 // Instruction Register
 //-------------------------------------------------------------
-always @ (posedge clk_i or posedge rst_i)
+always @ (posedge clk_i)
 if (rst_i)
 begin
     valid_q       <= 1'b0;
@@ -237,7 +237,7 @@ begin
     scoreboard_r[writeback_muldiv_idx_i] = 1'b0;
 end
 
-always @ (posedge clk_i or posedge rst_i)
+always @ (posedge clk_i)
 if (rst_i)
     scoreboard_q <= 32'b0;
 else
@@ -415,13 +415,15 @@ endfunction
 // set_register: Write register file
 //-------------------------------------------------------------
 /*verilator lint_off IGNOREDRETURN*/
-function set_register; /*verilator public*/
+/* -----\/----- EXCLUDED -----\/-----
+function set_register; /-*verilator public*-/
     input [4:0] r;
     input [31:0] value;
 begin
     u_regfile.set_register(r,value);
 end
 endfunction // set_register
+ -----/\----- EXCLUDED -----/\----- */
 /*verilator lint_on IGNOREDRETURN*/   
 //`endif
 

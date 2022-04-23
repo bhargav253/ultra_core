@@ -129,117 +129,121 @@ wire dcache_flush_w      = opcode_instr_i[`ENUM_INST_CSRRW] && (opcode_opcode_i[
 wire dcache_writeback_w  = opcode_instr_i[`ENUM_INST_CSRRW] && (opcode_opcode_i[31:20] == `CSR_DWRITEBACK);
 wire dcache_invalidate_w = opcode_instr_i[`ENUM_INST_CSRRW] && (opcode_opcode_i[31:20] == `CSR_DINVALIDATE);
 
+wire mem_stall           = (mem_rd_q | (|mem_wr_q)) & !mem_accept_i;   
+   
 //-------------------------------------------------------------
 // Sequential
 //-------------------------------------------------------------
-always @ (posedge clk_i or posedge rst_i)
-if (rst_i)
-begin
-    mem_addr_q       <= 32'b0;
-    mem_data_wr_q    <= 32'b0;
-    mem_rd_q         <= 1'b0;
-    mem_wr_q         <= 4'b0;
-    mem_req_tag_q    <= 11'b0;
-    mem_cacheable_q  <= 1'b0;
-    mem_invalidate_q <= 1'b0;
-    mem_flush_q      <= 1'b0;
-end
-else if (!((mem_invalidate_o || mem_flush_o || mem_rd_o || mem_wr_o != 4'b0) && !mem_accept_i))
-begin
-    mem_addr_q       <= 32'b0;
-    mem_data_wr_q    <= 32'b0;
-    mem_rd_q         <= 1'b0;
-    mem_wr_q         <= 4'b0;
-    mem_cacheable_q  <= 1'b0;
-    mem_req_tag_q    <= 11'b0;
-    mem_invalidate_q <= 1'b0;
-    mem_flush_q      <= 1'b0;
+   always @ (posedge clk_i)
+     if (rst_i) begin
+	mem_addr_q       <= 32'b0;
+	mem_data_wr_q    <= 32'b0;
+	mem_rd_q         <= 1'b0;
+	mem_wr_q         <= 4'b0;
+	mem_req_tag_q    <= 11'b0;
+	mem_cacheable_q  <= 1'b0;
+	mem_invalidate_q <= 1'b0;
+	mem_flush_q      <= 1'b0;
+     end
+     else if (!((mem_invalidate_o || mem_flush_o || mem_rd_o || mem_wr_o != 4'b0) && !mem_accept_i)) begin
 
-    // Tag associated with load
-    mem_req_tag_q[4:0] <= opcode_rd_idx_i;
-    mem_req_tag_q[6:5] <= mem_addr_r[1:0];
-    mem_req_tag_q[7]   <= opcode_instr_i[`ENUM_INST_LB] || opcode_instr_i[`ENUM_INST_LBU];
-    mem_req_tag_q[8]   <= opcode_instr_i[`ENUM_INST_LH] || opcode_instr_i[`ENUM_INST_LHU];
-    mem_req_tag_q[9]   <= opcode_instr_i[`ENUM_INST_LW] || opcode_instr_i[`ENUM_INST_LWU];
-    mem_req_tag_q[10]  <= load_signed_inst_w;        
+	if(!mem_stall) begin
+	   mem_addr_q       <= 32'b0;
+	   mem_data_wr_q    <= 32'b0;
+	   mem_rd_q         <= 1'b0;
+	   mem_wr_q         <= 4'b0;
+	   mem_cacheable_q  <= 1'b0;
+	   mem_req_tag_q    <= 11'b0;	   
+	   mem_invalidate_q <= 1'b0;
+	   mem_flush_q      <= 1'b0;       
+	end
 
-    mem_rd_q <= (opcode_valid_i && load_inst_w);
+	// Tag associated with load	  
+	if (opcode_valid_i & !mem_stall) begin
+	   mem_req_tag_q[4:0] <= opcode_rd_idx_i;
+	   mem_req_tag_q[6:5] <= mem_addr_r[1:0];
+	   mem_req_tag_q[7]   <= opcode_instr_i[`ENUM_INST_LB] || opcode_instr_i[`ENUM_INST_LBU];
+	   mem_req_tag_q[8]   <= opcode_instr_i[`ENUM_INST_LH] || opcode_instr_i[`ENUM_INST_LHU];
+	   mem_req_tag_q[9]   <= opcode_instr_i[`ENUM_INST_LW] || opcode_instr_i[`ENUM_INST_LWU];
+	   mem_req_tag_q[10]  <= load_signed_inst_w;        
+	end
+	
+	mem_rd_q <= mem_stall ? mem_rd_q : (opcode_valid_i && load_inst_w);
+	
+	if (!mem_stall & opcode_valid_i && opcode_instr_i[`ENUM_INST_SW])
+	  begin
+             mem_data_wr_q <= opcode_rb_operand_i;
+             mem_wr_q      <= 4'hF;
+	  end
+	else if (!mem_stall & opcode_valid_i && opcode_instr_i[`ENUM_INST_SH])
+	  begin
+             case (mem_addr_r[1:0])
+	       2'h2 :
+		 begin
+		    mem_data_wr_q  <= {opcode_rb_operand_i[15:0],16'h0000};
+		    mem_wr_q       <= 4'b1100;
+		 end
+	       default :
+		 begin
+		    mem_data_wr_q  <= {16'h0000,opcode_rb_operand_i[15:0]};
+		    mem_wr_q       <= 4'b0011;
+		 end
+             endcase
+	  end
+	else if (!mem_stall & opcode_valid_i && opcode_instr_i[`ENUM_INST_SB])
+	  begin
+             case (mem_addr_r[1:0])
+	       2'h3 :
+		 begin
+		    mem_data_wr_q  <= {opcode_rb_operand_i[7:0],24'h000000};
+		    mem_wr_q       <= 4'b1000;
+		 end
+	       2'h2 :
+		 begin
+		    mem_data_wr_q  <= {{8'h00,opcode_rb_operand_i[7:0]},16'h0000};
+		    mem_wr_q       <= 4'b0100;
+		 end
+	       2'h1 :
+		 begin
+		    mem_data_wr_q  <= {{16'h0000,opcode_rb_operand_i[7:0]},8'h00};
+		    mem_wr_q       <= 4'b0010;
+		 end
+	       2'h0 :
+		 begin
+		    mem_data_wr_q  <= {24'h000000,opcode_rb_operand_i[7:0]};
+		    mem_wr_q       <= 4'b0001;
+		 end
+	       default :
+		 ;
+             endcase        
+	  end
+	else
+          mem_wr_q         <= mem_stall ? mem_wr_q : 4'b0;
 
-    if (opcode_valid_i && opcode_instr_i[`ENUM_INST_SW])
-    begin
-        mem_data_wr_q <= opcode_rb_operand_i;
-        mem_wr_q      <= 4'hF;
-    end
-    else if (opcode_valid_i && opcode_instr_i[`ENUM_INST_SH])
-    begin
-        case (mem_addr_r[1:0])
-        2'h2 :
-        begin
-            mem_data_wr_q  <= {opcode_rb_operand_i[15:0],16'h0000};
-            mem_wr_q       <= 4'b1100;
-        end
-        default :
-        begin
-            mem_data_wr_q  <= {16'h0000,opcode_rb_operand_i[15:0]};
-            mem_wr_q       <= 4'b0011;
-        end
-        endcase
-    end
-    else if (opcode_valid_i && opcode_instr_i[`ENUM_INST_SB])
-    begin
-        case (mem_addr_r[1:0])
-        2'h3 :
-        begin
-            mem_data_wr_q  <= {opcode_rb_operand_i[7:0],24'h000000};
-            mem_wr_q       <= 4'b1000;
-        end
-        2'h2 :
-        begin
-            mem_data_wr_q  <= {{8'h00,opcode_rb_operand_i[7:0]},16'h0000};
-            mem_wr_q       <= 4'b0100;
-        end
-        2'h1 :
-        begin
-            mem_data_wr_q  <= {{16'h0000,opcode_rb_operand_i[7:0]},8'h00};
-            mem_wr_q       <= 4'b0010;
-        end
-        2'h0 :
-        begin
-            mem_data_wr_q  <= {24'h000000,opcode_rb_operand_i[7:0]};
-            mem_wr_q       <= 4'b0001;
-        end
-        default :
-            ;
-        endcase        
-    end
-    else
-        mem_wr_q         <= 4'b0;
+	/* verilator lint_off UNSIGNED */
+	/* verilator lint_off CMPCONST */
+	mem_cacheable_q  <= !mem_stall & opcode_valid_i ? mem_addr_r >= 32'h0 && mem_addr_r <= 32'h7fffffff : mem_cacheable_q;
+	/* verilator lint_on CMPCONST */
+	/* verilator lint_on UNSIGNED */
 
-/* verilator lint_off UNSIGNED */
-/* verilator lint_off CMPCONST */
-    mem_cacheable_q  <= mem_addr_r >= 32'h0 && mem_addr_r <= 32'h7fffffff;
-/* verilator lint_on CMPCONST */
-/* verilator lint_on UNSIGNED */
+	mem_invalidate_q <= mem_stall ? mem_invalidate_q : opcode_valid_i & dcache_invalidate_w;
+	mem_flush_q      <= mem_stall ? mem_flush_q      : opcode_valid_i & dcache_flush_w;
 
-    mem_invalidate_q <= opcode_valid_i & dcache_invalidate_w;
-    mem_flush_q      <= opcode_valid_i & dcache_flush_w;
-
-    // Mask address bits
-    mem_addr_q <= {mem_addr_r[31:2], 2'b0};
-end
-
+	// Mask address bits
+	mem_addr_q <= mem_stall ? mem_addr_q : {mem_addr_r[31:2], 2'b0};
+     end
+   
 assign mem_addr_o       = mem_addr_q;
 assign mem_data_wr_o    = mem_data_wr_q;
-assign mem_rd_o         = mem_rd_q;
-assign mem_wr_o         = mem_wr_q;
+assign mem_rd_o         = mem_rd_q & mem_accept_i;
+assign mem_wr_o         = mem_wr_q & {4{mem_accept_i}};
 assign mem_cacheable_o  = mem_cacheable_q;
 assign mem_req_tag_o    = mem_req_tag_q;
 assign mem_invalidate_o = mem_invalidate_q;
 assign mem_flush_o      = mem_flush_q;
 
 // Stall upstream if cache is busy
-assign stall_o          = ((mem_invalidate_o || mem_flush_o || mem_rd_o || mem_wr_o != 4'b0) && !mem_accept_i);
-
+assign stall_o          = ((mem_invalidate_o || mem_flush_o || mem_rd_q || mem_wr_q != 4'b0) && !mem_accept_i);
 //-------------------------------------------------------------
 // Error handling
 //-------------------------------------------------------------
