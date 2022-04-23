@@ -10,3 +10,4 @@
 !*.ld
 !*.py
 !*.S
+firmware/bkup/*
