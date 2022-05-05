@@ -7,16 +7,37 @@
 
 #include "firmware.h"
 
-#define OUTPORT 0x10000000
-
 void print_chr(char ch)
 {
-	*((volatile uint32_t*)OUTPORT) = ch;
+  *((volatile uint32_t*)UART_BASE) = ch;
+  *((volatile uint32_t*)UART_BASE) = '\n';
 }
 
 void print_str(const char *p)
 {
-	while (*p != 0)
-		*((volatile uint32_t*)OUTPORT) = *(p++);
-	*((volatile uint32_t*)OUTPORT) = 12;	
+  while (*p != 0)
+    *((volatile uint32_t*)UART_BASE) = *(p++);
+  *((volatile uint32_t*)UART_BASE) = 12;
+}
+
+char get_chr()
+{
+  char value = *(char*)UART_BASE;  
+  return value;
+}
+
+const char* get_str()
+{
+  char str[16];
+  int i = 0;  
+  
+  str[i] = *(char*)UART_BASE;  
+  
+  while (str[i] != '\n') {
+    i++;
+    str[i] = *(char*)UART_BASE;    
+  }
+
+  const char* p = str;
+  return p;
 }

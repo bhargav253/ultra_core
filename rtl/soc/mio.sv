@@ -53,6 +53,8 @@ module mio
 
    logic [31:0]   gpio_reg,uart_tx_data;
    logic [7:0] 	  uart_rx_data;   
+   logic 	  uart_rd,uart_rx_valid,uart_rx_en;   
+   
    
    /*AUTOLOGIC*/
    // Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -76,7 +78,6 @@ module mio
    logic		uart_axi_rvalid;	// From u_uart_fifo of axil_ext.v
    logic		uart_axi_wready;	// From u_uart_fifo of axil_ext.v
    logic		uart_axi_wvalid;	// From u_mio_split of axil_split.v
-   logic		uart_rx_en;		// From u_uart_fifo of axil_ext.v
    logic		uart_tx_en;		// From u_uart_fifo of axil_ext.v
    // End of automatics
 
@@ -154,7 +155,7 @@ module mio
     .ext_wr_dat   (uart_tx_data),
     .ext_wen      (),
     .ext_wr_req   (uart_tx_en),
-    .ext_rd_req   (uart_rx_en),
+    .ext_rd_req   (uart_rd),
     .ext_rrsp_val (uart_rx_valid),
     .ext_rrsp_dat ({24'd0,uart_rx_data}),
     );
@@ -171,7 +172,7 @@ module mio
 		  .axi_rdata		(uart_axi_rdata),	 // Templated
 		  .axi_rresp		(uart_axi_rresp),	 // Templated
 		  .axi_rvalid		(uart_axi_rvalid),	 // Templated
-		  .ext_rd_req		(uart_rx_en),		 // Templated
+		  .ext_rd_req		(uart_rd),		 // Templated
 		  .ext_wr_req		(uart_tx_en),		 // Templated
 		  .ext_wr_dat		(uart_tx_data),		 // Templated
 		  .ext_wen		(),			 // Templated
@@ -206,6 +207,11 @@ module mio
       .uart_tx_data (uart_tx_data[PAYLOAD_BITS-1:0] ) 
       );
 
+   // read req to enable, untill data is captured
+   always @(posedge clk)
+      if (!rst_n) uart_rx_en <= '0;
+      else        uart_rx_en <= uart_rd ? '1 : uart_rx_valid ? '0 : uart_rx_en;         
+   
    uart_rx #(
 	     .BIT_RATE     (BIT_RATE),
 	     .PAYLOAD_BITS (PAYLOAD_BITS),

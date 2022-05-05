@@ -1,5 +1,4 @@
-.equ UART_BASE, 0x10000000
-.equ GPIO_BASE, 0x10000004	
+.equ GPIO_BASE, 0x10000004
 
 .section .text
 .global _start

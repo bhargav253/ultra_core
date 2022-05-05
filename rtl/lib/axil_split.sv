@@ -96,7 +96,7 @@ module axil_split
       if(wr_decode[NUM_WR_DSTS]) begin
 	 src_axi_awready        = '1;	 
 	 src_axi_wready         = '1;
-	 wr_accept[NUM_WR_DSTS] = '1;	 
+	 wr_accept[NUM_WR_DSTS] = src_axi_awvalid & src_axi_wvalid;	 
       end
       else begin
 	 for(int i=0; i<NUM_WR_DSTS; i++) begin
@@ -123,7 +123,7 @@ module axil_split
       if(fif_wr_val & fif_wr_dat[NUM_WR_DSTS]) begin
 	 src_axi_bvalid           = '1;
 	 src_axi_bresp            = 2'b10;
-	 brsp_accept[NUM_WR_DSTS] = '1;
+	 brsp_accept[NUM_WR_DSTS] = src_axi_bready;
       end
       else begin	       
 	 for(int i=0; i<NUM_WR_DSTS; i++) begin	 
@@ -173,7 +173,7 @@ module axil_split
 
       if(rd_decode[NUM_RD_DSTS]) begin
 	 src_axi_arready        = '1;	 
-	 rd_accept[NUM_RD_DSTS] = '1;	 
+	 rd_accept[NUM_RD_DSTS] = src_axi_arvalid;	 
       end
       else begin
 	 for(int i=0; i<NUM_RD_DSTS; i++) begin	    
@@ -198,7 +198,7 @@ module axil_split
 	 src_axi_rvalid           = '1;
 	 src_axi_rdata            = '0;
 	 src_axi_rresp            = 2'b10;
-	 rrsp_accept[NUM_RD_DSTS] = '1;      	 
+	 rrsp_accept[NUM_RD_DSTS] = src_axi_rready;
       end
       else begin      	 
 	 for(int i=0; i<NUM_RD_DSTS; i++) begin	 	    	 

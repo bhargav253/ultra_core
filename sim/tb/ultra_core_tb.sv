@@ -10,7 +10,7 @@ module ultra_core_tb;
 
    logic clk,rst_n;   
    logic [3:0] GPIO_O;
-   logic       UART_TX;   
+   logic       UART_TX,UART_RX;   
 
    //ultra_core_intf intf(.clk(clk));
 
@@ -18,7 +18,8 @@ module ultra_core_tb;
 		   .clk(clk),
 		   .rst_n(rst_n),
 		   .GPIO_O(GPIO_O),
-		   .UART_TX(UART_TX)
+		   .UART_TX(UART_TX),
+		   .UART_RX(UART_RX)		   
 		   );
 
    initial begin
@@ -28,6 +29,14 @@ module ultra_core_tb;
       end
    end
 
+   initial begin
+      UART_RX = 0;
+      forever begin
+	 @(posedge clk);
+	 UART_RX= $urandom();	 
+      end
+   end
+   
    initial begin
       rst_n = '0;
       #100 rst_n = '1;

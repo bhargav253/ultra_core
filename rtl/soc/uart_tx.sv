@@ -34,7 +34,7 @@ module uart_tx
 
    // Number of clock cycles per uart bit.
    //localparam       CYCLES_PER_BIT     = BIT_P / CLK_P;
-   localparam       CYCLES_PER_BIT = 8;   // FIXME
+   localparam       CYCLES_PER_BIT = 8;   // FIXME for DV
    
    // Size of the registers which store sample counts and bit durations.
    localparam       COUNT_REG_LEN      = 1+$clog2(CYCLES_PER_BIT);

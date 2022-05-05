@@ -9,5 +9,8 @@
 
 void hello(void)
 {
-	print_str("hello world\r\n");
+  print_str("hello world; how is it going\r\n");
+  //char ret_chr;
+  //ret_chr = get_chr();
+  //print_chr(ret_chr);    
 }

@@ -11,8 +11,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define UART_BASE 0x10000000
+
 // print.c
 void print_chr(char ch);
 void print_str(const char *p);
-
+char get_chr();
+const char* get_str();
+  
 #endif
